@@ -1,0 +1,12 @@
+{
+    "private": true,
+    "scripts": {
+        "git:update": "git submodule update --recursive && git submodule foreach --recursive git checkout master"
+    },
+    "workspaces": [
+        "libs/*",
+        "libs/ng/projects/*",
+        "apps/*",
+        "vsce/*"
+    ]
+}
