@@ -1,3 +1,12 @@
 [submodule "libs/core"]
 	path = libs/core
 	url = https://github.com/Rapitron/core.git
+[submodule "libs/api"]
+	path = libs/api
+	url = https://github.com/Rapitron/api.git
+[submodule ".blueprints"]
+	path = .blueprints
+	url = https://github.com/Rapitron/blueprints.git
+[submodule "apps/reactor"]
+	path = apps/reactor
+	url = https://github.com/Rapitron/reactor.git
