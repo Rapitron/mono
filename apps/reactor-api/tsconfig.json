@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "baseUrl": "",
+    "outDir": "dist",
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "es2015",
+    "emitDecoratorMetadata": true,
+    "preserveSymlinks": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "paths": {}
+  }
+}
