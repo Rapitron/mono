@@ -10,3 +10,6 @@
 [submodule "apps/reactor"]
 	path = apps/reactor
 	url = https://github.com/Rapitron/reactor.git
+[submodule "libs/react"]
+	path = libs/react
+	url = https://github.com/Rapitron/react.git
