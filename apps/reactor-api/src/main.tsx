@@ -1,17 +1,28 @@
-import { Api, ApiHtmlResult, HttpMethodTypes, HttpProtocolModule } from '@rapitron/api';
+import { Api, ApiHtmlResult, ApiModule, ApiParameterSources, HttpMethodTypes, HttpProtocolModule } from '@rapitron/api';
+import { json } from '@rapitron/core';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 
+@ApiModule({
+
+})
+export class ApiServer {
+
+}
+
 export async function main() {
-    const api = new Api();
-    const http = new HttpProtocolModule(api, { port: 5000 });
-    api.definition = {
+    const api = new Api({
         middleware: [],
         hubs: [],
         controllers: [
             {
                 route: 'test',
-                guards: [],
+                guards: [
+                    (request, injector) => {
+                        console.log(request.type);
+                        // throw new ApiError(request.type, HttpResponseCodes.Unauthorized);
+                    }
+                ],
                 handlers: [
                     {
                         method: HttpMethodTypes.GET,
@@ -25,11 +36,29 @@ export async function main() {
                                 )
                             });
                         }
+                    },
+                    {
+                        method: HttpMethodTypes.GET,
+                        route: 'get2',
+                        guards: [],
+                        parameters: [
+                            {
+                                name: 'dog',
+                                source: ApiParameterSources.Parameter,
+                                type: String,
+                                // optional: true
+                            }
+                        ],
+                        call: (request, injector) => {
+                            return true;
+                        }
                     }
                 ]
             }
         ]
-    };
+    });
+    const http = new HttpProtocolModule(api, { port: 5000 });
+    console.log(json(api.getInfo()));
 }
 
 main();

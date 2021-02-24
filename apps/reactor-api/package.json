@@ -4,7 +4,7 @@
   "scripts": {
     "run": "nodemon",
     "build": "tsc -p tsconfig.build.json",
-    "test": ""
+    "test": "jest"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.158",
