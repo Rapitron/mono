@@ -13,3 +13,6 @@
 [submodule "libs/react"]
 	path = libs/react
 	url = https://github.com/Rapitron/react.git
+[submodule "libs/api-client"]
+	path = libs/api-client
+	url = https://github.com/Rapitron/api-client.git

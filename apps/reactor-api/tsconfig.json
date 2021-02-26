@@ -18,5 +18,8 @@
       "dom"
     ],
     "paths": {}
-  }
+  },
+  "include": [
+    "../../node_modules/@rapitron/**/*"
+  ]
 }
