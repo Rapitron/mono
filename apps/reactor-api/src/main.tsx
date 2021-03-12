@@ -81,6 +81,8 @@ Function.prototype.deserialize = function (data: [string, string[], string], glo
 
 export async function main() {
     const api = new Api();
+    const hubService = api.injector.get(HubService);
+    hubService.
     api.definition = {
         middleware: [],
         hubs: [
