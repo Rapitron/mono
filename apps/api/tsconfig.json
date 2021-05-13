@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": "",
+    "baseUrl": "./",
     "outDir": "dist",
     "declaration": false,
     "downlevelIteration": true,
@@ -11,8 +11,6 @@
     "target": "es2015",
     "emitDecoratorMetadata": true,
     "preserveSymlinks": true,
-    "esModuleInterop": true,
-    "noImplicitOverride": true,
     "lib": [
       "es2018",
       "dom"

@@ -4,6 +4,7 @@
   "scripts": {
     "run": "nodemon",
     "build": "tsc -p tsconfig.build.json",
+    "pack": "cd src/test && webpack --mode production",
     "test": "jest"
   },
   "devDependencies": {
@@ -11,9 +12,7 @@
     "@types/jest-expect-message": "^1.0.3",
     "@types/js-yaml": "^4.0.0",
     "@types/lodash": "^4.14.158",
-    "@types/node": "^14.14.7",
-    "@types/react": "^17.0.2",
-    "@types/react-dom": "^17.0.1",
+    "@types/node": "^14.14.41",
     "@types/ws": "^7.2.5",
     "jest": "^26.6.3",
     "jest-expect-message": "^1.0.2",
@@ -22,13 +21,13 @@
     "ts-jest": "^26.4.4",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "^4.0.5"
+    "typescript": "^4.3"
   },
   "dependencies": {
     "js-yaml": "^4.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
     "rxjs": "6.6.3",
-    "tslib": "^2.0.0"
+    "tslib": "^2.2.0",
+    "webpack-cli": "^4.6.0",
+    "ws": "^7.4.4"
   }
 }

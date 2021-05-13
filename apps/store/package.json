@@ -1,0 +1,27 @@
+{
+  "name": "store",
+  "version": "1.0.0",
+  "scripts": {
+    "run": "nodemon",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "jasmine-ts --config=jasmine.config.json"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^3.7.0",
+    "@types/lodash": "^4.14.158",
+    "@types/node": "^14.14.41",
+    "@types/ws": "^7.2.5",
+    "jasmine": "^3.7.0",
+    "jasmine-equal-value": "^1.0.2",
+    "jasmine-marbles": "^0.6.0",
+    "jasmine-spec-reporter": "^7.0.0",
+    "jasmine-ts": "^0.3.2",
+    "nodemon": "^2.0.4",
+    "ts-node": "^9.0.0",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^4.3"
+  },
+  "dependencies": {
+    "tslib": "^2.2.0"
+  }
+}

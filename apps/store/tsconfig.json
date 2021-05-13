@@ -11,12 +11,13 @@
     "target": "es2015",
     "emitDecoratorMetadata": true,
     "preserveSymlinks": true,
-    "esModuleInterop": true,
-    "noImplicitOverride": true,
     "lib": [
       "es2018",
       "dom"
     ],
     "paths": {}
-  }
+  },
+  "include": [
+    "../../libs/**/*.ts"
+  ]
 }
