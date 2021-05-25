@@ -23,7 +23,7 @@ const config: Configuration = {
             filename: isDevelopment ? '[name].css' : '[name].[hash].css',
             chunkFilename: isDevelopment ? '[id].css' : '[id].[hash].css'
         }),
-        new CopyWebpackPlugin({ patterns: [{ from: '../../node_modules', to: '_' }] })
+        new CopyWebpackPlugin({ patterns: [{ from: 'src/assets', to: 'assets' }] })
     ],
     module: {
         rules: [
