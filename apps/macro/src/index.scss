@@ -1,0 +1,13 @@
+* {
+    box-sizing: border-box;
+    padding: 0px;
+    margin: 0px;
+}
+
+html,
+body,
+#root {
+    height: 100vh;
+    overflow: none;
+    background: transparent!important;
+}
