@@ -1,7 +1,5 @@
 import { ArrayAdaptor, guid, Injector } from '@rapitron/core';
-import { Async } from '@rapitron/react/src';
-import React from 'react';
-import { Component, createRef } from 'react';
+import React, { Component, createRef } from 'react';
 import { MacroService } from './macro.service';
 
 export class TaskOverlayComponent extends Component<{ injector?: Injector }> {
@@ -19,7 +17,6 @@ export class TaskOverlayComponent extends Component<{ injector?: Injector }> {
 
     public draw() {
         const macro = this.macroService.querySelectedMacro.get({});
-        console.log('draw', macro);
         if (macro) {
             const tasks = this.macroService.tasks.get(macro.taskIds);
             const canvas = this.canvasRef.current;
@@ -48,28 +45,26 @@ export class TaskOverlayComponent extends Component<{ injector?: Injector }> {
                 onClick={event => {
                     const id = guid();
                     const macro = this.macroService.querySelectedMacro.get({});
-                    this.macroService.update(
-                        'Create Task',
-                        this.macroService.macros.update(macro.id, macro => ({
-                            taskIds: ArrayAdaptor.add(macro.taskIds, id)
-                        })),
-                        this.macroService.tasks.create({
-                            id,
-                            type: 'Click',
-                            position: {
-                                x: event.clientX,
-                                y: event.clientY
-                            },
-                            duration: 100
-                        })
-                    );
+                    if (macro) {
+                        this.macroService.update(
+                            'Create Task',
+                            this.macroService.macros.update(macro.id, macro => ({
+                                taskIds: ArrayAdaptor.add(macro.taskIds, id)
+                            })),
+                            this.macroService.tasks.create({
+                                id,
+                                type: 'Click',
+                                position: {
+                                    x: event.clientX,
+                                    y: event.clientY
+                                },
+                                duration: macro.defaultInterval
+                            })
+                        );
+                    }
                 }}
             />
         );
     }
 
 }
-
-// export function TaskOverlayComponent(props: { injector?: Injector }) {
-
-// }

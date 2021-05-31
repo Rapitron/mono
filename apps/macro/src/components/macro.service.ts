@@ -1,6 +1,7 @@
-import { IEntity, IPoint, json, Store } from '@rapitron/core';
+import { IEntity, IPoint, json, Store, tryParseJson } from '@rapitron/core';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 
 export interface ITasks extends IEntity {
     type: 'LeftDown' | 'LeftUp' | 'Click' | 'DoubleClick' | 'RightDown' | 'RightUp' | 'MiddleDown' | 'MiddleUp';
@@ -10,6 +11,8 @@ export interface ITasks extends IEntity {
 
 export interface IMacro extends IEntity {
     name: string;
+    defaultInterval: number;
+    executionCount: number;
     taskIds: string[];
 }
 
@@ -29,7 +32,7 @@ export class MacroService extends Store<IMacroState> {
 
     constructor() {
         super({
-            state: {
+            state: tryParseJson(localStorage.getItem('state')) ?? {
                 macros: [],
                 tasks: []
             }
@@ -42,12 +45,14 @@ export class MacroService extends Store<IMacroState> {
     public execute(id: string) {
         const macro = this.macros.get(id);
         let script = '';
-        for (const task of this.tasks.get(macro.taskIds)) {
-            script += `${task.type} ${task.position.x} ${task.position.y}\nWait ${task.duration}\n`;
+        for (let i = 0; i < macro.executionCount; i++) {
+            for (const task of this.tasks.get(macro.taskIds)) {
+                script += `${task.type} ${task.position.x} ${task.position.y}\nWait ${task.duration}\n`;
+            }
         }
         console.log(script);
-        fs.writeFileSync('C:/Users/rudiv/Desktop/bitbyte/Macro/bin/Debug/net5.0/script.macro', script, {  });
-        execFileSync('C:/Users/rudiv/Desktop/bitbyte/Macro/bin/Debug/net5.0/Macro.exe', ['C:/Users/rudiv/Desktop/bitbyte/Macro/bin/Debug/net5.0/script.macro']);
+        fs.writeFileSync(path.resolve('./net5.0/script.macro'), script, {});
+        execFileSync(path.resolve('./net5.0/Macro.exe'), [path.resolve('./net5.0/script.macro')]);
     }
 
     public getTaskColor(type: string) {
