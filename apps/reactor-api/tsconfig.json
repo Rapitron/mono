@@ -12,7 +12,6 @@
     "emitDecoratorMetadata": true,
     "preserveSymlinks": true,
     "esModuleInterop": true,
-    "noImplicitOverride": true,
     "lib": [
       "es2018",
       "dom"

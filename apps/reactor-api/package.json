@@ -2,7 +2,7 @@
   "name": "reactor-api",
   "version": "1.0.0",
   "scripts": {
-    "run": "nodemon",
+    "start": "nodemon",
     "build": "tsc -p tsconfig.build.json",
     "pack": "cd src/test && webpack --mode production",
     "test": "jest"

@@ -1,9 +1,9 @@
-import { Api, HttpMethodTypes, HttpProtocolModule, postman, WebProtocolModule, ApiFileResult, ApiParameterSources } from '@rapitron/api';
-import { json } from '@rapitron/core';
-import { transpileModule } from 'typescript';
+import { Api, HttpMethodTypes, HttpProtocolModule, postman, WebProtocolModule, WebClient, HubService } from '@rapitron/api';
+import { HubRemote } from '@rapitron/api-client';
+import { Socket, ConsoleLogger } from '@rapitron/core';
 import * as fs from 'fs';
-import * as path from 'path';
 import { Module } from 'module';
+import { transpileModule } from 'typescript';
 
 export async function main() {
     const api = new Api();
@@ -14,7 +14,28 @@ export async function main() {
             //     return next();
             // }
         ],
-        hubs: [],
+        hubs: [
+            {
+                name: 'user',
+                guards: [],
+                onConnect: () => { },
+                onDisconnect: () => { },
+                actions: [
+                    {
+                        name: 'get',
+                        guards: [],
+                        parameters: [String],
+                        invoke: (request, injector) => {
+                            const service = injector.get(HubService);
+                            service.dispatch('user', 'test', true);
+                            request.partial(1);
+                            request.partial(2);
+                            return 3;
+                        }
+                    }
+                ]
+            }
+        ],
         controllers: [
             {
                 route: 'api',
@@ -52,7 +73,28 @@ export async function main() {
     };
     // api.bootstrap(ApiServer);
     const http = new HttpProtocolModule(api, { port: 5000 });
-    const web = new WebProtocolModule(api, { port: 5001 });
+    const web = new WebProtocolModule(api.injector, { port: 5001, logger: new ConsoleLogger() });
+
+    const socket = new Socket();
+    await socket.connect('ws://localhost:5001');
+    try {
+        const remote = await HubRemote.connect(socket, { hub: 'user' });
+        remote.on('test').subscribe(() => {
+            console.log('ALERT');
+        });
+        remote.invoke('get', 'test').subscribe(
+            (result) => {
+                console.log(result);
+            },
+            error => {
+                console.log(error);
+            },
+            () => {
+                console.log('Done');
+            });
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 main();

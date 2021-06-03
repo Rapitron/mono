@@ -1,39 +1,40 @@
-import { WebError, WebServer } from '@rapitron/api';
+import { WebServer } from '@rapitron/api';
 import { $Tson, Any, ConsoleLogger } from '@rapitron/core';
 
 export async function main() {
     const server = new WebServer({
         logger: new ConsoleLogger(),
         controller: {
-            schemas: {
-                ping: String,
-                log: {
+            ping: {
+                schema: String,
+                call: (request) => {
+                    console.log(request.packet);
+                }
+            },
+            log: {
+                schema: {
                     _: {
                         message: Any
                     }
                 },
-                sum: {
+                call: request => {
+                    console.log(request.packet);
+                }
+            },
+            sum: {
+                schema: {
                     _: {
                         a: Number,
                         b: Number
                     }
                 },
-                info: null
-            },
-            handlers: {
-                ping: packet => {
-                    return 'pong';
-                },
-                log: packet => {
-                    console.log(packet);
-                },
-                sum: packet => {
-                    throw new WebError('Test');
-                    return packet.a + packet.b;
-                },
-                info: () => {
-                    return Object.keys(server.controller.schemas).reduce((info, schema) => ({ ...info, [schema]: $Tson.describeSchema(server.controller.schemas[schema]) }), {})
+                call: (request) => {
+                    request.reject('Test');
+                    return request.packet.packet.a + request.packet.packet.b;
                 }
+            },
+            info: {
+                call: () => Object.keys(server.controller).reduce((info, schema) => ({ ...info, [schema]: $Tson.describeSchema(server.controller[schema].schema) }), {})
             }
         }
     });
