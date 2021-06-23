@@ -100,22 +100,22 @@ export async function main() {
 main();
 
 export function compileModule(options: { code: string, paths: { [path: string]: string | object } }) {
-    const req = Module.prototype.require;
+    const require = Module.prototype.require;
     Module.prototype.require = function interceptor(moduleId: string) {
         if (moduleId in options.paths) {
             const dep = options.paths[moduleId];
-            return typeof dep === 'string' ? req.apply(this, [dep]) : dep;
+            return typeof dep === 'string' ? require.apply(this, [dep]) : dep;
         } else {
             for (const path in options.paths) {
                 if (moduleId.startsWith(path)) {
-                    return req.apply(this, [moduleId.replace(path, options.paths[path] as string)])
+                    return require.apply(this, [moduleId.replace(path, options.paths[path] as string)])
                 }
             }
-            return req.apply(this, arguments);
+            return require.apply(this, arguments);
         }
     } as any;
     const moduleText = transpileModule(options.code, {}).outputText;
     const module = eval(moduleText);
-    Module.prototype.require = req;
+    Module.prototype.require = require;
     return module;
 }

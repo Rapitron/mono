@@ -12,14 +12,14 @@ function App(props: { injector?: Injector }) {
     const appBuilderService = props.injector.get(AppBuilderService);
     appBuilderService.update(
         '',
-        appBuilderService.pages.create({
+        appBuilderService.pages.upsert({
             id: 'a',
             pluginIds: [
                 'a1',
                 'a3'
             ]
         }),
-        appBuilderService.plugins.create({
+        appBuilderService.plugins.upsert({
             id: 'a1',
             type: 'element',
             position: {
@@ -38,7 +38,7 @@ function App(props: { injector?: Injector }) {
                 'a2'
             ]
         }),
-        appBuilderService.plugins.create({
+        appBuilderService.plugins.upsert({
             id: 'a2',
             type: 'element',
             position: {
@@ -56,7 +56,7 @@ function App(props: { injector?: Injector }) {
             css: '',
             pluginIds: []
         }),
-        appBuilderService.plugins.create({
+        appBuilderService.plugins.upsert({
             id: 'a3',
             type: 'react',
             position: {
@@ -144,8 +144,6 @@ function App(props: { injector?: Injector }) {
         </Fragment>
     );
 }
-
-ReactInjector
 
 ReactDOM.render(
     <ReactInjector types={[AppBuilderService]}>

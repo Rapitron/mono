@@ -1,7 +1,4 @@
 const { app, BrowserWindow } = require('electron')
-const url = require("url");
-const path = require("path");
-const fs = require("fs");
 const process = require("process");
 
 process.chdir(process.env.PORTABLE_EXECUTABLE_DIR);

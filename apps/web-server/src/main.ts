@@ -1,5 +1,28 @@
 import { WebServer } from '@rapitron/api';
-import { $Tson, Any, ConsoleLogger } from '@rapitron/core';
+import { } from '@rapitron/api-client';
+import { $Tson, Any, ConsoleLogger, guid, Socket } from '@rapitron/core';
+import { filter, takeWhile } from 'rxjs/operators';
+
+export class WebClient {
+
+    constructor(private socket: Socket) {
+
+    }
+
+    public request(request: { id: string, schema: string, packet: any }) {
+        return WebClient.request(this.socket, request);
+    }
+
+    public static request(socket: Socket, request: { id: string, schema: string, packet: any }) {
+        const stream = socket.stream.pipe(
+            filter(response => response.id === request.id),
+            takeWhile(response => !('result' in response || 'error' in response), true)
+        );
+        socket.send(request);
+        return stream;
+    }
+
+}
 
 export async function main() {
     const server = new WebServer({
@@ -7,8 +30,24 @@ export async function main() {
         controller: {
             ping: {
                 schema: String,
+                guards: [
+                    (request) => {
+                        // request.respond('INTERCEPTED');
+                        // request.packet = request.packet.toUpperCase();
+                        // throw new WebError('INTERCEPTED');
+                    }
+                ],
+                middleware: [
+                    async (request, next) => {
+                        request.packet = request.packet.toUpperCase();
+                        const result = await next();
+                        return result.toUpperCase();
+                    }
+                ],
                 call: (request) => {
                     console.log(request.packet);
+                    request.partial('whoops');
+                    return 'pong';
                 }
             },
             log: {
@@ -39,6 +78,23 @@ export async function main() {
         }
     });
     server.start();
+    const socket = await Socket.create({
+        url: 'ws://localhost:5001',
+        autoReconnect: true
+    });
+    // socket.stream.subscribe(console.log);
+    // socket.send({
+    //     id: guid(),
+    //     schema: 'ping',
+    //     packet: '123'
+    // });
+    WebClient.request(socket, {
+        id: guid(),
+        schema: 'ping',
+        packet: 'ping'
+    }).subscribe(console.log, null, () => {
+        console.log('done');
+    });
 }
 
 main();
