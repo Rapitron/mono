@@ -1,5 +1,6 @@
 import { Injector } from '@rapitron/core';
 import { ContextMenu, If, ReactInjector, Switch, SwitchCase } from '@rapitron/react';
+import { LoginComponent } from './app/login/login.component';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { AppService } from './app/app.service';
@@ -26,8 +27,8 @@ function App(props: { injector?: Injector }) {
                     {() => <PagesPageComponent />}
                 </SwitchCase>
             </Switch> */}
-            {/* <LoginComponent /> */}
-            <div>
+            <LoginComponent />
+            {/* <div>
                 <button onMouseEnter={e => {
                     menu = ContextMenu.showRelativeTo({
                         element: e.target as HTMLElement,
@@ -40,7 +41,7 @@ function App(props: { injector?: Injector }) {
                 }} onMouseLeave={() => {
                     menu.close();
                 }}>Test</button>
-            </div>
+            </div> */}
         </div>
     );
 }

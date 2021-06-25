@@ -1,28 +1,7 @@
 import { WebServer } from '@rapitron/api';
-import { } from '@rapitron/api-client';
+import { WebClient } from '@rapitron/api-client';
 import { $Tson, Any, ConsoleLogger, guid, Socket } from '@rapitron/core';
 import { filter, takeWhile } from 'rxjs/operators';
-
-export class WebClient {
-
-    constructor(private socket: Socket) {
-
-    }
-
-    public request(request: { id: string, schema: string, packet: any }) {
-        return WebClient.request(this.socket, request);
-    }
-
-    public static request(socket: Socket, request: { id: string, schema: string, packet: any }) {
-        const stream = socket.stream.pipe(
-            filter(response => response.id === request.id),
-            takeWhile(response => !('result' in response || 'error' in response), true)
-        );
-        socket.send(request);
-        return stream;
-    }
-
-}
 
 export async function main() {
     const server = new WebServer({
@@ -74,11 +53,22 @@ export async function main() {
             },
             info: {
                 call: () => Object.keys(server.controller).reduce((info, schema) => ({ ...info, [schema]: $Tson.describeSchema(server.controller[schema].schema) }), {})
+            },
+            herman: {
+                schema: {
+                    _: {
+                        name: String,
+                        age: Number
+                    }
+                },
+                call: ({ packet }: { packet: { name: string, age: number } }) => {
+                    return `name: ${packet.name}; age: ${packet.age}`;
+                }
             }
         }
     });
     server.start();
-    const socket = await Socket.create({
+    const socket = await Socket.connect({
         url: 'ws://localhost:5001',
         autoReconnect: true
     });

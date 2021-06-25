@@ -1,9 +1,9 @@
-import { createStyles, Styles } from '@rapitron/react';
+import { Classes, Style, StyleRules } from '@rapitron/react';
 import React, { Component } from 'react';
 
 export class LoginComponent extends Component {
 
-    public static styles = createStyles({
+    public static styles = {
         label: {
             display: 'grid',
             alignContent: 'center',
@@ -27,11 +27,11 @@ export class LoginComponent extends Component {
             alignContent: 'center',
             // gap: '10px'
         }
-    });
+    };
 
     public render() {
         return (
-            <Styles styles={LoginComponent.styles}>
+            <Classes classes={LoginComponent.styles}>
                 {classes => (
                     <div style={{
                         display: 'grid',
@@ -93,7 +93,7 @@ export class LoginComponent extends Component {
                         </div>
                     </div>
                 )}
-            </Styles>
+            </Classes>
         );
     }
 

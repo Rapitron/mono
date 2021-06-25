@@ -1,4 +1,4 @@
-import { Adaptor, Store, Update } from '@rapitron/core';
+import { Adaptor, guid, Injector, InjectToken, IProvider, json, Selector, Store, StoreBinding, Type, Update } from '@rapitron/core';
 
 export interface IAddress {
     number: number;
@@ -51,4 +51,64 @@ export async function main() {
     const q = store.query((parms: {}) => []);
 }
 
-main();
+// main();
+
+export interface IAppState {
+    users?: IUsersState;
+}
+
+export class AppStore extends Store<IAppState> {
+
+    constructor() {
+        super({
+            state: {}
+        });
+    }
+
+}
+
+export interface IUsersState {
+
+    users: IUser[];
+
+}
+
+export class UsersStore extends Store<IUsersState> {
+
+    public readonly users = this.createEntityAdaptor(state => state.users);
+
+    constructor() {
+        super({
+            state: {
+                users: []
+            }
+        });
+    }
+
+}
+
+function provideStoreWithBinding<TStoreState extends object, TRepoState extends object>(repo: Type<Store<TRepoState>>, selector: Selector<TRepoState, TStoreState>, store: Type<Store<TStoreState>>): IProvider<Store<TStoreState>> {
+    return {
+        type: store,
+        factory: injector => injector
+            .create(store)
+            .bind(injector.get(repo), selector)
+    };
+}
+
+async function test() {
+    const injector = new Injector(
+        { type: AppStore },
+        provideStoreWithBinding(AppStore, repo => repo.users, UsersStore)
+    );
+    const store = injector.get(AppStore);
+    const userStore = injector.get(UsersStore);
+    userStore.update('', userStore.users.create({
+        id: guid(),
+        name: 'Rudi'
+    }));
+    console.log(json(store.state));
+    console.log(json(userStore.state));
+}
+
+test();

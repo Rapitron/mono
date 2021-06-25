@@ -3,6 +3,7 @@ import { HubRemote } from '@rapitron/api-client';
 import { Socket, ConsoleLogger } from '@rapitron/core';
 import * as fs from 'fs';
 import { Module } from 'module';
+import { Observable } from 'rxjs';
 import { transpileModule } from 'typescript';
 
 export async function main() {
@@ -75,8 +76,9 @@ export async function main() {
     const http = new HttpProtocolModule(api, { port: 5000 });
     const web = new WebProtocolModule(api.injector, { port: 5001, logger: new ConsoleLogger() });
 
-    const socket = new Socket();
-    await socket.connect('ws://localhost:5001');
+    const socket = await Socket.connect({
+        url: 'ws://localhost:5001'
+    });
     try {
         const remote = await HubRemote.connect(socket, { hub: 'user' });
         remote.on('test').subscribe(() => {

@@ -6,7 +6,7 @@ import { Configuration } from 'webpack';
 
 const isDevelopment = true;
 
-const config: Configuration = {
+const config = {
     mode: 'development',
     devtool: 'source-map',
     entry: {
