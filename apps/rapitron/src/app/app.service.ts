@@ -1,17 +1,22 @@
-import { Store } from '@rapitron/core';
+import { IEntity, Injectable, Store } from '@rapitron/core';
 
-export interface IAppState {
-    activePage: string;
+export interface IPage extends IEntity {
+    name: string;
 }
 
+export interface IAppState {
+    pages: IPage[];
+}
+
+@Injectable()
 export class AppService extends Store<IAppState> {
 
-    public readonly activePage = this.createAdaptor(state => state.activePage);
+    public readonly pages = this.createEntityAdaptor(state => state.pages);
 
     constructor() {
         super({
             state: {
-                activePage: 'pages'
+                pages: []
             }
         });
     }

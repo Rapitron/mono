@@ -1,4 +1,4 @@
-import { Classes, Style, StyleRules } from '@rapitron/react';
+import { Classes, InputComponent, Style, StyleRules } from '@rapitron/react';
 import React, { Component } from 'react';
 
 export class LoginComponent extends Component {
@@ -7,19 +7,21 @@ export class LoginComponent extends Component {
         label: {
             display: 'grid',
             alignContent: 'center',
-            borderBottom: '1px solid #0ADEFA',
+            // borderBottom: '1px solid #0ADEFA',
             paddingLeft: '10px',
             paddingRight: '10px',
             fontWeight: 'bold',
-            color: 'white'
+            color: 'white',
+            background: 'var(--select-color)'
         },
         input: {
             border: 'none',
-            borderBottom: '1px solid #22A8E2',
+            // borderBottom: '1px solid #22A8E2',
             // borderRadius: '5px',
             padding: '5px 10px',
-            background: '#1F063F',
-            color: 'white'
+            background: 'var(--background-secondary-color)',
+            color: 'white',
+            width: '100%'
         },
         control: {
             display: 'grid',
@@ -39,17 +41,17 @@ export class LoginComponent extends Component {
                         justifyContent: 'center',
                         alignContent: 'center',
                         height: '100%',
-                        background: 'url(assets/login.png) no-repeat',
+                        background: 'var(--background-color)',
                         backgroundSize: 'contain 100%'
                     }}>
                         <div style={{
                             display: 'grid',
-                            width: '350px',
+                            width: '300px',
                             padding: '20px',
-                            background: 'rgb(29 7 63 / 75%)',
+                            background: 'var(--background-tertiary-color)',
                             borderRadius: '5px',
-                            border: '1px solid #22A8E2',
-                            boxShadow: '0px 0px 5px #6818d1'
+                            // border: '1px solid #22A8E2',
+                            // boxShadow: '0px 0px 5px var(--select-color)'
                         }}>
                             <img
                                 src="assets/rapitron.png"
@@ -65,7 +67,7 @@ export class LoginComponent extends Component {
                                 color: 'white'
                             }}>
                                 Rapitron
-                        </h1>
+                            </h1>
                             <div style={{
                                 display: 'grid',
                                 gap: '5px',
@@ -80,16 +82,24 @@ export class LoginComponent extends Component {
                                     <input className={classes.input} />
                                 </div>
                             </div>
-                            <button style={{
+                            <Style rules={{
                                 justifySelf: 'end',
                                 border: 'none',
-                                borderRadius: '5px',
                                 padding: '5px 10px',
-                                background: 'linear-gradient(160deg, rgba(0,250,250,1.00) 0%, rgba(50,100,250,1.00) 100%)',
-                                color: 'white'
+                                background: 'var(--select-color)',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                '&:hover': {
+                                    cursor: 'pointer',
+                                    background: 'var(--select-focus-color)',
+                                }
                             }}>
-                                Login
-                                </button>
+                                {style => <>
+                                    <button className={style}>
+                                        Login
+                                    </button>
+                                </>}
+                            </Style>
                         </div>
                     </div>
                 )}

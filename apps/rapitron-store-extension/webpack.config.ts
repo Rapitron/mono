@@ -13,7 +13,7 @@ const config = {
         index: path.resolve(__dirname, "src", "index.tsx")
     },
     output: {
-        path: path.resolve(__dirname, "dist")
+        path: path.resolve(__dirname, "extension/devtools/dist")
     },
     plugins: [
         new HtmlWebpackPlugin({
@@ -23,7 +23,7 @@ const config = {
             filename: isDevelopment ? '[name].css' : '[name].[hash].css',
             chunkFilename: isDevelopment ? '[id].css' : '[id].[hash].css'
         }),
-        new CopyWebpackPlugin({ patterns: [{ from: 'src/assets', to: 'assets' }] }),
+        // new CopyWebpackPlugin({ patterns: [{ from: 'src/assets', to: 'assets' }] }),
         new MonacoWebpackPlugin({
             languages: [
                 'json',

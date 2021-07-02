@@ -1,5 +1,6 @@
 import '@rapitron/core';
-import { ContextMenu, For, Icon, Icons } from '@rapitron/react';
+import { Injector } from '@rapitron/core';
+import { ContextMenu, For, Icon, Icons, Router } from '@rapitron/react';
 import React from 'react';
 import { Component } from 'react';
 import { fromEvent } from 'rxjs';
@@ -11,18 +12,24 @@ export interface IHotbarAction {
     call: () => void;
 }
 
-export class HotbarComponent extends Component {
+export class HotbarComponent extends Component<{ injector?: Injector }> {
+
+    private readonly router = this.props.injector.get(Router);
 
     public actions: IHotbarAction[] = [
         {
             icon: Icons.Screen,
             name: 'Pages',
-            call: () => { }
+            call: () => {
+                this.router.navigate('login', { test: true });
+            }
         },
         {
             icon: Icons.Diagram,
             name: 'Microflows',
-            call: () => { }
+            call: () => {
+                this.router.navigate('test');
+            }
         },
         {
             icon: Icons.Database,
@@ -137,6 +144,7 @@ export class HotbarComponent extends Component {
                                                 menu.close();
                                             });
                                         }}
+                                        onClick={() => action.call()}
                                     >
                                         <Icon icon={action.icon} />
                                     </div>
