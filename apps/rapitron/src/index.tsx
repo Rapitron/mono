@@ -1,8 +1,8 @@
-import { $Reflection, guid, Injector, json, Store, uid } from '@rapitron/core';
+import { $Reflection, guid, Injector, IProvider, json, Selector, Store, Type, uid } from '@rapitron/core';
 import { ReactInjector, Route, Router } from '@rapitron/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { AppService } from './app/app.service';
+import { AppService, HotbarService, UserService } from './app/app.service';
 import { AppletBuilderService } from './app/applet/applet-builder.service';
 import { HotbarComponent } from './app/hotbar/hotbar.component';
 import { LoginComponent } from './app/login/login.component';
@@ -12,33 +12,41 @@ import './index.scss';
 function App(props: { injector?: Injector }) {
 
     const appService = props.injector.get(AppService);
+    const userService = props.injector.get(UserService);
 
-    appService.update(
-        'Create Page',
-        appService.pages.create({
+    userService.update(
+        'Create User',
+        userService.users.create({
             id: 'a',
-            name: 'New Page'
+            name: 'Rudi'
         })
     );
-    appService.update(
-        'Create Page',
-        appService.pages.update('a', {
-            name: 'Updated Page A'
+    userService.update(
+        'Create Users',
+        userService.users.create(
+            {
+                id: 'b',
+                name: 'Carel'
+            },
+            {
+                id: 'c',
+                name: 'Herman'
+            }
+        )
+    );
+    userService.update(
+        'Update and Add User',
+        userService.users.update('a', {
+            name: 'Ross'
         }),
-        appService.pages.create({
-            id: 'b',
-            name: 'New Page'
+        userService.users.create({
+            id: 'd',
+            name: 'Roland'
         })
     );
-    appService.update(
-        'Update Page',
-        appService.pages.update('a', {
-            name: 'Test Page'
-        })
-    );
-    appService.update(
-        'Delete Page',
-        appService.pages.delete('a')
+    userService.update(
+        'Delete User',
+        userService.users.delete('c')
     );
 
     return (
@@ -63,12 +71,28 @@ function App(props: { injector?: Injector }) {
     );
 }
 
+function provideStoreWithBinding<TStoreState extends object, TRepoState extends object>(repo: Type<Store<TRepoState>>, selector: Selector<TRepoState, TStoreState>, store: Type<Store<TStoreState>>): IProvider<Store<TStoreState>> {
+    return {
+        type: store,
+        factory: injector => injector
+            .create(store)
+            .bind(injector.get(repo), selector)
+    };
+}
+
 ReactDOM.render(
-    <ReactInjector types={[
-        AppService,
-        AppletBuilderService,
-        Router
-    ]}>
+    <ReactInjector
+        types={[
+            AppService,
+            HotbarService,
+            AppletBuilderService,
+            Router
+        ]}
+        providers={[
+            provideStoreWithBinding(AppService, state => state.users, UserService),
+            // provideStoreWithBinding(AppService, state => state.hotbar, HotbarService)
+        ]}
+    >
         {() => <App />}
     </ReactInjector>,
     document.getElementById("root")

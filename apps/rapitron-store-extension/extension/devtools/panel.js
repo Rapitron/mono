@@ -15,6 +15,14 @@
 // });
 // chrome.devtools.panels.create('Rapitron Store', null, "devtools/panel.html", null);
 
+document.addEventListener('rapitron-store-update', async event => {
+    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+        chrome.tabs.sendMessage(tab.id, {
+            type: 'rapitron-store-update',
+            data: event.data
+        });
+    });
+});
 
 chrome.runtime.onMessage.addListener(request => {
     window.data = request.data;

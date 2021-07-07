@@ -1,6 +1,7 @@
 import '@rapitron/core';
 import { Injector } from '@rapitron/core';
 import { ContextMenu, For, Icon, Icons, Router } from '@rapitron/react';
+import { HotbarService } from '../app.service';
 import React from 'react';
 import { Component } from 'react';
 import { fromEvent } from 'rxjs';
@@ -8,7 +9,7 @@ import { first } from 'rxjs/operators';
 
 export interface IHotbarAction {
     icon: Icons;
-    name: string;
+    text: string;
     call: () => void;
 }
 
@@ -19,39 +20,51 @@ export class HotbarComponent extends Component<{ injector?: Injector }> {
     public actions: IHotbarAction[] = [
         {
             icon: Icons.Screen,
-            name: 'Pages',
+            text: 'Pages',
             call: () => {
                 this.router.navigate('login', { test: true });
             }
         },
         {
             icon: Icons.Diagram,
-            name: 'Microflows',
+            text: 'Microflows',
             call: () => {
                 this.router.navigate('test');
             }
         },
         {
             icon: Icons.Database,
-            name: 'Data',
+            text: 'Data',
             call: () => { }
         },
         {
             icon: Icons.Stack,
-            name: 'Extensions',
+            text: 'Extensions',
             call: () => { }
         },
         {
             icon: Icons.User,
-            name: 'Account',
+            text: 'Account',
             call: () => { }
         },
         {
             icon: Icons.Gear,
-            name: 'Settings',
+            text: 'Settings',
             call: () => { }
         }
     ];
+
+    constructor(props: { injector?: Injector }) {
+        super(props);
+    }
+
+    public componentDidMount() {
+        const hotbarService = this.props.injector.get(HotbarService);
+        hotbarService.actions.select().subscribe(actions => {
+            this.actions = actions.map(action => ({ ...action, call: () => { } }));
+            this.forceUpdate();
+        });
+    }
 
     public render() {
         return (
@@ -136,7 +149,7 @@ export class HotbarComponent extends Component<{ injector?: Injector }> {
                                                         color: 'var(--select-text-color)',
                                                         borderRadius: '0px 5px 5px 0px'
                                                     }}>
-                                                        {action.name}
+                                                        {action.text}
                                                     </div>
                                                 )
                                             });

@@ -1,5 +1,5 @@
 const options = {
-    title: 'RStore',
+    title: 'Rapitron | Store',
     icon: null,
     file: 'devtools/panel.html',
     callback: () => {}
