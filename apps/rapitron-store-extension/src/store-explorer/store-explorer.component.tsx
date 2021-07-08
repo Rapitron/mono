@@ -7,6 +7,7 @@ import { IStoreExplorerAction } from './action.interface';
 import { MonacoDiffEditor, MonacoEditor } from './monaco-editor.component';
 import { IStoreExplorerStore } from './store.interface';
 
+
 export interface IStoreExplorerComponentState {
     stores: IStoreExplorerStore[];
     selectedStoreIndex?: number;
