@@ -1,12 +1,12 @@
-import { $Changes, Change, Injector, json, tryJson, tryParseJson } from '@rapitron/core';
+import { $Changes, Change, Injector, tryJson, tryParseJson } from '@rapitron/core';
 import { For, If } from '@rapitron/react';
 import { cloneDeep, get } from 'lodash';
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { StoreExplorerActionListComponent } from './action-list.component';
 import { IStoreExplorerAction } from './action.interface';
+import { ChromeExtension } from './chrome-extension.service';
 import { MonacoDiffEditor, MonacoEditor } from './monaco-editor.component';
 import { IStoreExplorerStore } from './store.interface';
-
 
 export interface IStoreExplorerComponentState {
     stores: IStoreExplorerStore[];
@@ -17,50 +17,53 @@ export interface IStoreExplorerComponentState {
 
 export class StoreExplorerComponent extends Component<{ injector?: Injector }, IStoreExplorerComponentState> {
 
+    private extension = this.props.injector.get(ChromeExtension);
     public state: IStoreExplorerComponentState = {
         stores: [],
     };
 
-    constructor(props: any) {
+    constructor(props: { injector?: Injector }) {
         super(props);
-        document.addEventListener('rapitron-store', (e) => {
-            const data: {
-                index: number,
+        this.extension.on<{
+            index: number,
+            name: string,
+            initialState: {},
+            state: {},
+            action: {
                 name: string,
-                initialState: {},
-                action: {
-                    name: string,
-                    path: string,
-                    changes: Change[]
-                }
-            } = (window as any).data;
-            const store = this.state.stores.find(store => store.index === data.index);
+                path: string,
+                changes: Change[]
+            }
+        }>('action').subscribe(packet => {
+            const store = this.state.stores.find(store => store.index === packet.index);
             if (!store) {
                 this.setState({
                     ...this.state,
                     stores: this.state.stores.concat({
-                        index: data.index,
-                        name: data.name,
-                        initialState: data.initialState,
+                        index: packet.index,
+                        name: packet.name,
+                        initialState: packet.initialState,
+                        state: packet.state,
                         actions: [{
-                            ...data.action,
+                            ...packet.action,
                             timestamp: new Date()
                         }]
                     })
                 });
             } else {
-                if (data.action.name === '∴' && !data.action.path) {
-                    store.initialState = data.initialState;
+                if (packet.action.name === '∴' && !packet.action.path) {
+                    store.initialState = packet.initialState;
                     store.actions = [{
-                        ...data.action,
+                        ...packet.action,
                         timestamp: new Date()
                     }];
                 } else {
                     store.actions.push({
-                        ...data.action,
+                        ...packet.action,
                         timestamp: new Date()
                     });
                 }
+                store.state = packet.state;
                 this.forceUpdate();
             }
         });
@@ -75,6 +78,7 @@ export class StoreExplorerComponent extends Component<{ injector?: Injector }, I
     }
 
     public render() {
+        const monacoEditorRef = createRef<MonacoEditor>();
         return (
             <div style={{
                 display: 'grid',
@@ -137,21 +141,39 @@ export class StoreExplorerComponent extends Component<{ injector?: Injector }, I
                 </If>
                 <If condition={this.state.selectedStoreIndex != null && !this.state.selectedAction}>
                     {() => (
-                        <MonacoEditor
-                            value={this.getStoreState()}
-                            onChange={value => {
-                                const state = tryParseJson(value);
-                                if (state) {
-                                    const changes = $Changes.get(this.getStoreState(), state);
-                                    document.dispatchEvent(new MessageEvent('rapitron-store-update', {
-                                        data: {
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateRows: 'auto max-content',
+                            gap: '10px',
+                            padding: '10px',
+                            background: 'var(--background-secondary-color)',
+                            color: 'var(--background-secondary-text-color)',
+                        }}>
+                            <MonacoEditor
+                                ref={monacoEditorRef}
+                                value={this.getStoreState()}
+                            />
+                            <button
+                                style={{
+                                    cursor: 'pointer',
+                                    padding: '5px 10px',
+                                    border: 'none',
+                                    background: 'var(--select-color)',
+                                    color: 'var(--select-text-color)'
+                                }}
+                                onClick={() => {
+                                    const state = tryParseJson(monacoEditorRef.current.model.getValue());
+                                    if (state) {
+                                        const changes = $Changes.get(this.getStoreState(), state);
+                                        this.extension.send('update', {
                                             index: this.state.selectedStoreIndex,
                                             changes
-                                        }
-                                    }));
-                                }
-                            }}
-                        />
+                                        });
+                                    }
+                                }}>
+                                Update
+                            </button>
+                        </div>
                     )}
                 </If>
             </div>
@@ -196,8 +218,8 @@ export class StoreExplorerComponent extends Component<{ injector?: Injector }, I
             original = cloneDeep(value);
         }
         return {
-            original: json(original),
-            value: json(value)
+            original: tryJson(original),
+            value: tryJson(value)
         };
     }
 

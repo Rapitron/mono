@@ -2,6 +2,7 @@ import { Change, Injector } from '@rapitron/core';
 import { $StyleSheet, classes, For, If } from '@rapitron/react';
 import React, { Component } from 'react';
 import { IStoreExplorerAction } from './action.interface';
+import { ChromeExtension } from './chrome-extension.service';
 
 export interface IStoreExploreActionListComponentProps {
     actions: IStoreExplorerAction[];
@@ -43,6 +44,7 @@ const styles = $StyleSheet.create({
 
 export class StoreExplorerActionListComponent extends Component<IStoreExploreActionListComponentProps, IStoreExplorerActionListComponentState> {
 
+    private extension = this.props.injector.get(ChromeExtension);
     public state: IStoreExplorerActionListComponentState = {};
 
     public render() {
@@ -58,16 +60,38 @@ export class StoreExplorerActionListComponent extends Component<IStoreExploreAct
                             onClick={() => {
                                 this.setState({
                                     ...this.state,
-                                    selectedAction: action,
+                                    selectedAction: this.state.selectedAction === action ? null : action,
                                     selectedChange: null
                                 });
-                                this.props.onSelectionChange(action, null);
+                                this.props.onSelectionChange(this.state.selectedAction === action ? null : action, null);
                             }}>
                             <div style={{
-                                borderBottom: '1px solid var(--select-color)',
-                                padding: '2px'
+                                display: 'grid',
+                                gridTemplateColumns: 'auto max-content',
+                                gap: '5px',
+                                alignContent: 'center'
                             }}>
-                                {action.name}
+                                <div style={{
+                                    borderBottom: '1px solid var(--select-color)',
+                                    padding: '2px'
+                                }}>
+                                    {action.name}
+                                </div>
+                                <div
+                                    style={{
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '50%',
+                                        background: action.breakpoint ? 'var(--success-color)' : 'var(--outline-color)'
+                                    }}
+                                    onClick={() => {
+                                        action.breakpoint = !action.breakpoint;
+                                        this.extension.send('breakpoint', {
+                                            action: action.name
+                                        });
+                                        this.forceUpdate();
+                                    }}
+                                />
                             </div>
                             <div style={{
                                 color: 'var(--placeholder-color)',

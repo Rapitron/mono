@@ -4,5 +4,6 @@ export interface IStoreExplorerStore {
     index: number;
     name: string;
     initialState: {};
+    state: {};
     actions: IStoreExplorerAction[];
 }

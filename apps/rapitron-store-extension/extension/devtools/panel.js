@@ -15,18 +15,9 @@
 // });
 // chrome.devtools.panels.create('Rapitron Store', null, "devtools/panel.html", null);
 
-document.addEventListener('rapitron-store-update', async event => {
-    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-        chrome.tabs.sendMessage(tab.id, {
-            type: 'rapitron-store-update',
-            data: event.data
-        });
-    });
-});
+// document.addEventListener('rse', async event => {
+//     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+//         chrome.tabs.sendMessage(tab.id, event.data);
+//     });
+// });
 
-chrome.runtime.onMessage.addListener(request => {
-    window.data = request.data;
-    document.dispatchEvent(new MessageEvent('rapitron-store', {
-        data: request.data.data
-    }));
-});

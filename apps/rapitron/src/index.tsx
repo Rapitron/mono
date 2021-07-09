@@ -6,7 +6,6 @@ import { AppService, HotbarService, UserService } from './app/app.service';
 import { AppletBuilderService } from './app/applet/applet-builder.service';
 import { HotbarComponent } from './app/hotbar/hotbar.component';
 import { LoginComponent } from './app/login/login.component';
-import { StoreExplorerComponent } from './app/store-explorer/store-explorer.component';
 import './index.scss';
 
 function App(props: { injector?: Injector }) {
@@ -62,11 +61,6 @@ function App(props: { injector?: Injector }) {
                     <LoginComponent />
                 </>}
             </Route>
-            <Route path='test'>
-                {() => <>
-                    <StoreExplorerComponent />
-                </>}
-            </Route>
         </div>
     );
 }
@@ -84,13 +78,13 @@ ReactDOM.render(
     <ReactInjector
         types={[
             AppService,
-            HotbarService,
+            // HotbarService,
             AppletBuilderService,
             Router
         ]}
         providers={[
             provideStoreWithBinding(AppService, state => state.users, UserService),
-            // provideStoreWithBinding(AppService, state => state.hotbar, HotbarService)
+            provideStoreWithBinding(AppService, state => state.hotbar, HotbarService)
         ]}
     >
         {() => <App />}

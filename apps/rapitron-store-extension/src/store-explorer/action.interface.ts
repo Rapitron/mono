@@ -5,4 +5,5 @@ export interface IStoreExplorerAction {
     name: string;
     path: string;
     changes: Change[];
+    breakpoint?: boolean;
 }

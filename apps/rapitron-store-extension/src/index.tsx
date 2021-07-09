@@ -1,7 +1,9 @@
+import { ReactInjector } from '@rapitron/react';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { StoreExplorerComponent } from './store-explorer/store-explorer.component';
 import './index.scss';
+import { ChromeExtension } from './store-explorer/chrome-extension.service';
+import { StoreExplorerComponent } from './store-explorer/store-explorer.component';
 
 function App(props: any) {
     return (
@@ -15,6 +17,8 @@ function App(props: any) {
 }
 
 ReactDOM.render(
-    <App />,
+    <ReactInjector types={[ChromeExtension]}>
+        {() => <App />}
+    </ReactInjector>,
     document.getElementById("root")
 );

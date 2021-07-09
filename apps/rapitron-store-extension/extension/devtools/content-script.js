@@ -8,19 +8,5 @@
 //     });
 // });
 
-chrome.runtime.onMessage.addListener(message => {
-    if ('type' in message) {
-        if (message.type === 'rapitron-store-update') {
-            document.dispatchEvent(new MessageEvent('rapitron-store-update', {
-                data: message.data
-            }));
-        }
-    }
-});
-
-document.addEventListener('rapitron-store', event => {
-    chrome.runtime.sendMessage({
-        type: 'rapitron-store',
-        data: event.data
-    });
-});
+chrome.runtime.onMessage.addListener(message => document.dispatchEvent(new MessageEvent('rse', message)));
+document.addEventListener('rse', event => chrome.runtime.sendMessage(event.data));
