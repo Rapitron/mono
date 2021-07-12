@@ -4,6 +4,7 @@
     ],
     "ext": "ts",
     "ignore": [
+        "src/test",
         "**/*.spec.ts?(x)"
     ],
     "exec": "node --inspect -r tsconfig-paths/register -r ts-node/register ./src/main.ts"

@@ -1,9 +1,9 @@
-import { Api, HttpMethodTypes, HttpProtocolModule, postman, WebProtocolModule, WebClient, HubService } from '@rapitron/api';
-import { HubRemote } from '@rapitron/api-client';
-import { Socket, ConsoleLogger } from '@rapitron/core';
+import * as RapitronApi from '@rapitron/api';
+import { Api, HttpMethodTypes, HttpProtocolModule, HubService, postman, WebProtocolModule } from '@rapitron/api';
+import { ConsoleLogger, request, IMap, assignDefaults } from '@rapitron/core';
 import * as fs from 'fs';
 import { Module } from 'module';
-import { Observable } from 'rxjs';
+import * as path from 'path';
 import { transpileModule } from 'typescript';
 
 export async function main() {
@@ -39,7 +39,7 @@ export async function main() {
         ],
         controllers: [
             {
-                route: 'api',
+                route: '_',
                 guards: [],
                 handlers: [
                     {
@@ -51,21 +51,32 @@ export async function main() {
                     },
                     {
                         method: HttpMethodTypes.GET,
-                        route: 'plugin/{...route}',
+                        route: 'info',
                         guards: [],
                         parameters: [],
                         call: async (request, injector) => {
-                            const path = `./src/${request.routeParameters['api']}/main.ts`;
-                            const data = fs.readFileSync(path, { encoding: 'utf8' });
-                            const module = compileModule({
-                                code: data,
-                                paths: {
-                                    '@plugin': `./${request.routeParameters['api']}`
-                                }
-                            });
-                            const api: Api = module();
-                            request.route = request.routeParameters['route'];
-                            return api.control(request);
+                            return api.getInfo();
+                        }
+                    },
+                    {
+                        method: HttpMethodTypes.GET,
+                        route: 'apis',
+                        guards: [],
+                        parameters: [],
+                        call: async (request, injector) => {
+                            const apis = {};
+                            for (const moduleRoute in config.apis) {
+                                const file = config.apis[moduleRoute];
+                                const module = compileModuleFromFile({
+                                    file: path.join(__dirname, 'test', file),
+                                    paths: {
+                                        '@plugin': `./test`
+                                    }
+                                });
+                                const api: Api = module();
+                                apis[moduleRoute] = api.getInfo();
+                            }
+                            return apis;
                         }
                     }
                 ]
@@ -76,48 +87,104 @@ export async function main() {
     const http = new HttpProtocolModule(api, { port: 5000 });
     const web = new WebProtocolModule(api.injector, { port: 5001, logger: new ConsoleLogger() });
 
-    const socket = await Socket.connect({
-        url: 'ws://localhost:5001'
-    });
-    try {
-        const remote = await HubRemote.connect(socket, { hub: 'user' });
-        remote.on('test').subscribe(() => {
-            console.log('ALERT');
+    const config = compileModuleFromFile({ file: './src/test/rapi.config.ts' });
+
+    for (const moduleRoute in config.apis) {
+        api.definition.controllers.push({
+            route: moduleRoute,
+            guards: [],
+            handlers: [{
+                method: HttpMethodTypes.ANY,
+                route: '{...route}',
+                guards: [],
+                parameters: [],
+                call: async (request) => {
+                    const { route } = request.routeParameters;
+                    request.route = route;
+                    const file = config.apis[moduleRoute];
+                    const module = compileModuleFromFile({
+                        file: path.join(__dirname, 'test', file),
+                        paths: {
+                            '@plugin': `./test`
+                        }
+                    });
+                    const api = module();
+                    return await api.control(request);
+                }
+            }]
         });
-        remote.invoke('get', 'test').subscribe(
-            (result) => {
-                console.log(result);
-            },
-            error => {
-                console.log(error);
-            },
-            () => {
-                console.log('Done');
-            });
-    } catch (error) {
-        console.log(error);
     }
+
+
+    console.log(config);
+
+    request({
+        url: 'http://localhost:5000/api/plugin/test/get',
+    })
+        .then(result => console.log(result))
+        .catch(result => console.log(result));
+
+    // const socket = await Socket.connect({
+    //     url: 'ws://localhost:5001'
+    // });
+    // try {
+    //     const remote = await HubRemote.connect(socket, { hub: 'user' });
+    //     remote.on('test').subscribe(() => {
+    //         console.log('ALERT');
+    //     });
+    //     remote.invoke('get', 'test').subscribe(
+    //         (result) => {
+    //             console.log(result);
+    //         },
+    //         error => {
+    //             console.log(error);
+    //         },
+    //         () => {
+    //             console.log('Done');
+    //         });
+    // } catch (error) {
+    //     console.log(error);
+    // }
 }
 
 main();
 
-export function compileModule(options: { code: string, paths: { [path: string]: string | object } }) {
-    const require = Module.prototype.require;
-    Module.prototype.require = function interceptor(moduleId: string) {
-        if (moduleId in options.paths) {
-            const dep = options.paths[moduleId];
-            return typeof dep === 'string' ? require.apply(this, [dep]) : dep;
-        } else {
-            for (const path in options.paths) {
-                if (moduleId.startsWith(path)) {
-                    return require.apply(this, [moduleId.replace(path, options.paths[path] as string)])
-                }
-            }
-            return require.apply(this, arguments);
+export function compileModuleFromFile(options: { file: string, modules?: IMap<object>, paths?: IMap<string> }) {
+    assignDefaults(options, {
+        modules: {},
+        paths: {}
+    });
+    const code = fs.readFileSync(options.file, { encoding: 'utf8' });
+    return compileModule({
+        code,
+        modules: options.modules,
+        paths: options.paths,
+        root: path.dirname(options.file)
+    });
+}
+
+export function compileModule(options: { code: string, root?: string, modules?: IMap<object>, paths?: IMap<string> }) {
+    assignDefaults(options, {
+        modules: {},
+        paths: {}
+    });
+    const req = Module.prototype.require;
+    Module.prototype.require = function (moduleId: string) {
+        let [uri] = arguments;
+        if (options.root && uri.startsWith('.')) {
+            uri = path.join(options.root, uri);
         }
+        const load = (uri: string) => {
+            try {
+                return req.apply(this, [uri]);
+            } catch {
+                return req.apply(this, [path.join(options.root, 'node_modules', uri)]);
+            }
+        };
+        return options.modules[moduleId] ?? load(uri);
     } as any;
-    const moduleText = transpileModule(options.code, {}).outputText;
-    const module = eval(moduleText);
-    Module.prototype.require = require;
-    return module;
+    const umd = transpileModule(options.code, {}).outputText;
+    const module = eval(umd);
+    Module.prototype.require = req;
+    return module
 }

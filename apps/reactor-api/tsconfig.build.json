@@ -1,15 +1,7 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "paths": {
-            "@rapitron/api": [
-                "../../dist/libs/api"
-            ],
-            "@rapitron/core": [
-                "../../dist/libs/core"
-            ]
-        }
+        "outDir": "./dist"
     },
     "include": [
         "src/**/*.ts"

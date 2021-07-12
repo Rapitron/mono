@@ -1,7 +1,9 @@
 import { Api, HttpMethodTypes } from '@rapitron/api';
-import { JsonFilters } from '@plugin/json-filter';
+import { JsonFilters } from './json-filter';
+import { upperCase } from 'lodash';
+import * as moment from 'moment';
 
-export default function load() {
+export default function () {
     return new Api({
         controllers: [
             {
@@ -13,7 +15,7 @@ export default function load() {
                         route: 'get',
                         guards: [],
                         parameters: [],
-                        call: () => [0, 1, 2].filter(JsonFilters.equals(1))
+                        call: () => [0, 1, 2, upperCase('a'), moment.now()].filter(JsonFilters.not(JsonFilters.equals(1)))
                     }
                 ]
             }
