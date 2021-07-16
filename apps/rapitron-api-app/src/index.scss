@@ -4,6 +4,15 @@
     margin: 0;
 }
 
+:root {
+    --primary: #6E87EB;
+    --primary-text: #FFFFF5;
+    --secondary: #394774;
+    --secondary-text: #F0F9FF;
+    --primary-gradient: linear-gradient(to bottom, var(--primary), var(--secondary));
+    --secondary-gradient: linear-gradient(to bottom, var(--secondary), #323F6B);
+}
+
 html,
 body,
 #root {

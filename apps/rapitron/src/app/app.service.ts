@@ -15,7 +15,17 @@ export class AppService extends Store<IAppState> {
 
     constructor() {
         super({
-            state: {}
+            state: {
+                hotbar: {
+                    actions: [
+                        {
+                            id: 'a',
+                            icon: Icons.Gear,
+                            text: 'Settings'
+                        }
+                    ]
+                }
+            }
         });
     }
 

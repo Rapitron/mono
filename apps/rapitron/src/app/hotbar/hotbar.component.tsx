@@ -1,6 +1,6 @@
 import '@rapitron/core';
 import { Injector } from '@rapitron/core';
-import { ContextMenu, For, Icon, Icons, Router } from '@rapitron/react';
+import { ContextMenu, For, Icon, Icons, Position, Router } from '@rapitron/react';
 import { HotbarService } from '../app.service';
 import React from 'react';
 import { Component } from 'react';
@@ -136,18 +136,17 @@ export class HotbarComponent extends Component<{ injector?: Injector }> {
                                         onMouseEnter={event => {
                                             const menu = ContextMenu.showRelativeTo({
                                                 element: event.currentTarget as any,
-                                                locations: ['right'],
                                                 render: () => (
                                                     <div style={{
                                                         position: 'relative',
-                                                        left: '-10px',
                                                         display: 'grid',
                                                         alignContent: 'center',
                                                         padding: '5px 10px',
                                                         paddingLeft: '20px',
                                                         background: 'var(--select-color)',
                                                         color: 'var(--select-text-color)',
-                                                        borderRadius: '0px 5px 5px 0px'
+                                                        borderRadius: '0px 5px 5px 0px',
+                                                        transform: 'translateY(-50%)'
                                                     }}>
                                                         {action.text}
                                                     </div>
