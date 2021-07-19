@@ -17,8 +17,8 @@ function App(props: any) {
 }
 
 ReactDOM.render(
-    <ReactInjector types={[ChromeExtension]}>
-        {() => <App />}
+    <ReactInjector inject={injector => injector.addType(ChromeExtension)}>
+        <App />
     </ReactInjector>,
     document.getElementById("root")
 );

@@ -1,14 +1,15 @@
-import { Button, ButtonTypes, classes, For, Icon, Icons, If, inject, ReactInjector, StyledElement, Switch, SwitchCase } from '@rapitron/react';
-import React, { Component, useState } from 'react';
-import { createRef } from 'react';
-import { ReactNode } from 'react';
+import { Adaptor, ArrayAdaptor, getDefaults, guid, Update } from '@rapitron/core';
+import { Button, ButtonTypes, classes, ContextMenu, For, Icon, Icons, If, inject, ReactInjector, StyledElement, Switch, SwitchCase, useState } from '@rapitron/react';
+import { DevtoolsStore } from './devtools-store.util';
+import React, { ReactNode } from 'react';
 import ReactDOM from 'react-dom';
-import { $Reflection, Injector } from '../../../libs/core/src';
 import './index.scss';
 import { KeyValueComponent } from './rapi/key-value.component';
 import { MonacoEditor } from './rapi/monaco-editor.component';
 import { RapiService } from './rapi/rapi.service';
 import { RequestTreeComponent } from './rapi/request-tree.component';
+
+DevtoolsStore.init();
 
 export enum StyleVars {
     Primary = 'var(--primary)',
@@ -287,10 +288,130 @@ function App(props: any) {
     );
 }
 
+export const TreeViewNodeIndexToken = Symbol();
+export const TreeViewStateToken = Symbol();
+
+export const TreeViewNode = inject<{
+    id?: string,
+    icon: Icons,
+    text: string,
+    onClick?: (event: React.MouseEvent) => void,
+    onRightClick?: (event: React.MouseEvent) => void,
+    onSelect?: () => void,
+    onDeselect?: () => void
+}>((props) => {
+    props = getDefaults(props, {
+        id: guid(),
+        onClick: () => { },
+        onSelect: () => { },
+        onDeselect: () => { }
+    });
+    const [state] = useState({
+        id: props.id
+    });
+    const [treeState, updateTreeState] = props.injector.get<any>(TreeViewStateToken);
+    const index = props.injector.get<number>(TreeViewNodeIndexToken, true) ?? 0;
+    const selected = treeState.selectedNodes.includes(state.id);
+    const expanded = treeState.expandedNodes.includes(state.id);
+
+    return <>
+        <StyledElement
+            styles={{
+                display: 'grid',
+                gridTemplateColumns: 'max-content max-content auto',
+                gap: '5px',
+                padding: '2.5px 10px',
+                paddingLeft: `${10 * index}px`,
+                '&:hover': {
+                    cursor: 'pointer',
+                    background: TreeViewTheme.item.hover.background,
+                    color: TreeViewTheme.item.hover.color
+                },
+                '&.selected': {
+                    background: TreeViewTheme.item.selected.background,
+                    color: TreeViewTheme.item.selected.color
+                }
+            }}
+            onClick={(event) => {
+                updateTreeState({
+                    expandedNodes: ArrayAdaptor.toggle(treeState.expandedNodes, state.id),
+                    selectedNodes: [state.id]
+                });
+                props.onClick(event);
+                if (!selected) {
+                    props.onSelect();
+                } else {
+                    props.onDeselect();
+                }
+            }}
+            onContextMenu={event => props.onRightClick(event)}
+            className={classes({
+                selected
+            })}
+        >
+            <Icon icon={!expanded ? Icons.ChevronRight : Icons.ChevronDown} />
+            <Icon icon={props.icon} />
+            <span>{props.text}</span>
+        </StyledElement>
+        <If condition={expanded}>
+            {() => (
+                <ReactInjector inject={injector => injector.addToken({ type: TreeViewNodeIndexToken, value: index + 1 })}>
+                    {props.children}
+                </ReactInjector>
+            )}
+        </If>
+    </>;
+});
+
+const TreeViewTheme = {
+    background: '#282C34',
+    color: '#ABB2BF',
+    item: {
+        hover: {
+            background: '#2C313A',
+            color: '#C1CCAD',
+        },
+        selected: {
+            background: '#333842',
+            color: '#C1CCAD',
+        }
+    }
+};
+
+export const TreeView = function (props: { children: ReactNode }) {
+    const state = useState({
+        selectedNodes: [],
+        expandedNodes: []
+    });
+    return (
+        <div style={{
+            overflow: 'auto',
+            background: TreeViewTheme.background,
+            color: TreeViewTheme.color
+        }}>
+            <ReactInjector inject={injector => injector.addToken({ type: TreeViewStateToken, value: state })}>
+                {props.children}
+            </ReactInjector>
+        </div>
+    );
+};
+new RapiService();
+
 ReactDOM.render(
-    // <ReactInjector inject={injector => injector.addToken({ type: Test, value: 'A' })}>
     <ReactInjector inject={injector => injector.addType(RapiService)}>
-        <App />
+        <TreeView>
+            <TreeViewNode icon={Icons.Flag} text='Test'>
+                <TreeViewNode icon={Icons.Flag} text='Test' onRightClick={(event) => {
+                    ContextMenu.show({
+                        location: { x: event.clientX, y: event.clientY },
+                        render: () => <div>Test</div>
+                    });
+                    event.preventDefault();
+                }}>
+
+                </TreeViewNode>
+            </TreeViewNode>
+        </TreeView>
     </ReactInjector>,
     document.getElementById("root")
 );

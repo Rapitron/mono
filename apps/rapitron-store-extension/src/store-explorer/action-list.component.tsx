@@ -1,5 +1,5 @@
 import { Change, Injector } from '@rapitron/core';
-import { $StyleSheet, classes, For, If } from '@rapitron/react';
+import { $StyleSheet, classes, For, If, inject, useState } from '@rapitron/react';
 import React, { Component } from 'react';
 import { IStoreExplorerAction } from './action.interface';
 import { ChromeExtension } from './chrome-extension.service';
@@ -42,28 +42,25 @@ const styles = $StyleSheet.create({
     }
 });
 
-export class StoreExplorerActionListComponent extends Component<IStoreExploreActionListComponentProps, IStoreExplorerActionListComponentState> {
+export const StoreExplorerActionListComponent = inject<IStoreExploreActionListComponentProps>((props) => {
+    const extension = props.injector.get(ChromeExtension);
+    const [state, updateState] = useState<IStoreExplorerActionListComponentState>({});
 
-    private extension = this.props.injector.get(ChromeExtension);
-    public state: IStoreExplorerActionListComponentState = {};
-
-    public render() {
-        return (
-            <div className={styles.list}>
-                <For items={this.props.actions}>
+    return (
+        <div className={styles.list}>
+                <For items={props.actions}>
                     {action => (
                         <div
                             className={classes(
                                 styles.item,
-                                { selected: this.state.selectedAction === action }
+                                { selected: state.selectedAction === action }
                             )}
                             onClick={() => {
-                                this.setState({
-                                    ...this.state,
-                                    selectedAction: this.state.selectedAction === action ? null : action,
+                                updateState({
+                                    selectedAction: state.selectedAction === action ? null : action,
                                     selectedChange: null
                                 });
-                                this.props.onSelectionChange(this.state.selectedAction === action ? null : action, null);
+                                props.onSelectionChange(state.selectedAction === action ? null : action, null);
                             }}>
                             <div style={{
                                 display: 'grid',
@@ -86,21 +83,16 @@ export class StoreExplorerActionListComponent extends Component<IStoreExploreAct
                                     }}
                                     onClick={() => {
                                         action.breakpoint = !action.breakpoint;
-                                        this.extension.send('breakpoint', {
+                                        extension.send('breakpoint', {
+                                            storeIndex: 0,
                                             action: action.name
                                         });
-                                        this.forceUpdate();
+                                        updateState({});
                                     }}
                                 />
                             </div>
-                            <div style={{
-                                color: 'var(--placeholder-color)',
-                                padding: '2px'
-                            }}>
-                                {action.path}
-                            </div>
                             <div>
-                                <If condition={this.state.selectedAction === action}>
+                                <If condition={state.selectedAction === action}>
                                     {() => (
                                         <For items={action.changes}>
                                             {change => (
@@ -111,15 +103,14 @@ export class StoreExplorerActionListComponent extends Component<IStoreExploreAct
                                                     }}
                                                     className={classes(
                                                         styles.change,
-                                                        { selected: this.state.selectedChange === change }
+                                                        { selected: state.selectedChange === change }
                                                     )}
                                                     onClick={event => {
                                                         event.stopPropagation();
-                                                        this.setState({
-                                                            ...this.state,
+                                                        updateState({
                                                             selectedChange: change
                                                         });
-                                                        this.props.onSelectionChange(action, change);
+                                                        props.onSelectionChange(action, change);
                                                     }}>
                                                     <div style={{
                                                         padding: '5px',
@@ -146,7 +137,5 @@ export class StoreExplorerActionListComponent extends Component<IStoreExploreAct
                     )}
                 </For>
             </div>
-        );
-    }
-
-}
+    );
+});
