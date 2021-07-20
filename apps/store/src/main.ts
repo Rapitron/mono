@@ -26,6 +26,7 @@ export class UsersStore extends Store<IUsersState> {
 }
 
 async function test() {
+
     const injector = new Injector(
         { type: UsersStore }
     );

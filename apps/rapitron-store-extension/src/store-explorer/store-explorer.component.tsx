@@ -1,27 +1,39 @@
-import { $Changes, Change, tryJson, tryParseJson } from '@rapitron/core';
-import { For, If, inject, useState } from '@rapitron/react';
+import { $Changes, ArrayAdaptor, Change, guid, Store, tryJson, tryParseJson } from '@rapitron/core';
+import { Async, If, inject } from '@rapitron/react';
 import { cloneDeep, get } from 'lodash';
-import React, { createRef, useEffect } from 'react';
+import React, { createRef } from 'react';
+import { tap } from 'rxjs/operators';
 import { StoreExplorerActionListComponent } from './action-list.component';
-import { IStoreExplorerAction } from './action.interface';
 import { ChromeExtension } from './chrome-extension.service';
 import { MonacoDiffEditor, MonacoEditor } from './monaco-editor.component';
+import { StoreExplorerStoreSelectorComponent } from './store-selector.component';
 import { IStoreExplorerStore } from './store.interface';
 
-export interface IStoreExplorerComponentState {
+export interface IStoreExplorerState {
     stores: IStoreExplorerStore[];
-    selectedStoreIndex?: number;
-    selectedAction?: IStoreExplorerAction;
-    selectedChange?: Change;
+    selectedStoreId?: string;
+    selectedActionId?: string;
+    selectedChangeIndex?: number;
 }
 
-export const StoreExplorerComponent = inject((props) => {
-    const [state, updateState] = useState<IStoreExplorerComponentState>({
-        stores: []
-    });
-    const extension = props.injector.get(ChromeExtension);
-    useEffect(() => {
-        extension.on<{
+export class StoreExplorerService extends Store<IStoreExplorerState> {
+
+    public readonly stores = this.createEntityAdaptor(state => state.stores);
+    public readonly selectedStoreId = this.createAdaptor(state => state.selectedStoreId);
+    public readonly selectedActionId = this.createAdaptor(state => state.selectedActionId);
+    public readonly selectedChangeIndexId = this.createAdaptor(state => state.selectedChangeIndex);
+    public readonly querySelectedStore = this.selectedStoreId.query((id) => this.stores.get(id));
+
+    constructor(private extension: ChromeExtension) {
+        super({
+            state: {
+                stores: [],
+            }
+        });
+    }
+
+    public inspect() {
+        return this.extension.on<{
             index: number,
             name: string,
             initialState: {},
@@ -30,42 +42,80 @@ export const StoreExplorerComponent = inject((props) => {
                 name: string,
                 changes: Change[]
             }
-        }>('action').subscribe(packet => {
-            const store = state.stores.find(store => store.index === packet.index);
-            if (!store) {
-                updateState({
-                    stores: state.stores.concat({
-                        index: packet.index,
-                        name: packet.name,
-                        initialState: packet.initialState,
-                        state: packet.state,
-                        actions: [{
-                            ...packet.action,
-                            timestamp: new Date()
-                        }]
-                    })
-                });
-            } else {
-                if (packet.action.name === '∴') {
-                    store.initialState = packet.initialState;
-                    store.actions = [{
-                        ...packet.action,
-                        timestamp: new Date()
-                    }];
+        }>('action').pipe(
+            tap(packet => {
+                const id = String(packet.index);
+                const store = this.stores.get(id);
+                if (store) {
+                    this.update(
+                        'Add Action',
+                        this.stores.update(
+                            id,
+                            state => ({
+                                initialState: packet.initialState,
+                                actions: packet.action.name === '∴' ? [] : state.actions
+                            }),
+                            state => ({
+                                actions: ArrayAdaptor.add(state.actions, {
+                                    id: guid(),
+                                    ...packet.action,
+                                    timestamp: new Date()
+                                })
+                            })
+                        )
+                    );
                 } else {
-                    store.actions.push({
-                        ...packet.action,
-                        timestamp: new Date()
-                    });
+                    this.update(
+                        'Add Store With Action',
+                        this.stores.create({
+                            id: `${packet.index}`,
+                            index: packet.index,
+                            name: packet.name,
+                            initialState: packet.initialState,
+                            state: packet.state,
+                            actions: [{
+                                id: guid(),
+                                ...packet.action,
+                                timestamp: new Date()
+                            }]
+                        })
+                    );
                 }
-                store.state = packet.state;
-                updateState({});
-            }
-        });
-    }, []);
+            })
+        );
+    }
+
+    public selectStore(id: string) {
+        this.update(
+            'Select Store',
+            this.selectedStoreId.update(id),
+            this.selectedActionId.update(null),
+            this.selectedChangeIndexId.update(null)
+        );
+    }
+
+    public selectAction(id: string) {
+        this.update(
+            'Select Action',
+            this.selectedActionId.update(id),
+            this.selectedChangeIndexId.update(null)
+        );
+    }
+
+    public selectChange(index: number) {
+        this.update(
+            'Select Change',
+            this.selectedChangeIndexId.update(index)
+        );
+    }
+
+}
+
+export const StoreExplorerComponent = inject((props) => {
+    const service = props.injector.get(StoreExplorerService);
     const monacoEditorRef = createRef<MonacoEditor>();
     const getActionChangeDiff = () => {
-        const store = state.stores.find(store => store.actions.includes(state.selectedAction));
+        const store = state.stores.find(store => store.actions.find(action => action.id === state.selectedAction.id));
         let original = {};
         let value = cloneDeep(store.initialState);
         for (const action of store.actions) {
@@ -91,7 +141,7 @@ export const StoreExplorerComponent = inject((props) => {
     };
 
     const getStoreActionDiff = () => {
-        const store = state.selectedStoreIndex != null ? state.stores.find(store => store.index === state.selectedStoreIndex) : state.stores.find(store => store.actions.includes(state.selectedAction));
+        const store = state.selectedStoreIndex != null ? state.stores.find(store => store.index === state.selectedStoreIndex) : state.stores.find(store => store.actions.find(action => action.id === state.selectedAction.id));
         let original = {};
         let value = cloneDeep(store.initialState);
         for (const action of store.actions) {
@@ -125,100 +175,76 @@ export const StoreExplorerComponent = inject((props) => {
     };
 
     return (
-        <div style={{
-            display: 'grid',
-            gridTemplateColumns: '250px auto',
-            height: '100%',
-            overflow: 'hidden'
-        }}>
-            <div style={{
-                display: 'grid',
-                gridTemplateRows: 'max-content auto',
-                gap: '10px',
-                padding: '10px',
-                height: '100%',
-                overflow: 'hidden'
-            }}>
-                <select
-                    style={{
-                        width: '100%',
-                        border: 'none',
-                        boxShadow: '0px 0px 2px black',
-                        background: 'var(--background-tertiary-color)',
-                        color: 'var(--background-tertiary-text-color)',
-                        padding: '5px 10px'
-                    }}
-                    onChange={event => updateState({
-                        selectedStoreIndex: event.target.value === 'all' ? null : Number(event.target.value),
-                        selectedAction: null,
-                        selectedChange: null
-                    })}
-                    value={state.selectedStoreIndex}
-                >
-                    <option selected value={'all'}>-- All --</option>
-                    <For items={state.stores}>
-                        {store => (
-                            <option value={store.index}>{store.name}</option>
-                        )}
-                    </For>
-                </select>
-                <StoreExplorerActionListComponent
-                    actions={getActions()}
-                    onSelectionChange={(action, change) => updateState({
-                        selectedAction: action,
-                        selectedChange: change
-                    })}
-                />
-            </div>
-            <If condition={state.selectedAction && !state.selectedChange}>
-                {() => {
-                    const diff = getStoreActionDiff();
-                    return <MonacoDiffEditor original={diff.original} value={diff.value} />
-                }}
-            </If>
-            <If condition={state.selectedAction && state.selectedChange}>
-                {() => {
-                    const diff = getActionChangeDiff();
-                    return <MonacoDiffEditor original={diff.original} value={diff.value} />
-                }}
-            </If>
-            <If condition={state.selectedStoreIndex != null && !state.selectedAction}>
-                {() => (
+        <Async select={service.inspect()}>
+            {() => (
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '250px auto',
+                    height: '100%',
+                    overflow: 'hidden'
+                }}>
                     <div style={{
                         display: 'grid',
-                        gridTemplateRows: 'auto max-content',
+                        gridTemplateRows: 'max-content auto',
                         gap: '10px',
                         padding: '10px',
-                        background: 'var(--background-secondary-color)',
-                        color: 'var(--background-secondary-text-color)',
+                        height: '100%',
+                        overflow: 'hidden'
                     }}>
-                        <MonacoEditor
-                            ref={monacoEditorRef}
-                            value={getStoreState()}
-                        />
-                        <button
-                            style={{
-                                cursor: 'pointer',
-                                padding: '5px 10px',
-                                border: 'none',
-                                background: 'var(--select-color)',
-                                color: 'var(--select-text-color)'
-                            }}
-                            onClick={() => {
-                                const state = tryParseJson(monacoEditorRef.current.model.getValue());
-                                if (state) {
-                                    const changes = $Changes.get(getStoreState(), state);
-                                    extension.send('update', {
-                                        index: state.selectedStoreIndex,
-                                        changes
-                                    });
-                                }
-                            }}>
-                            Update
-                        </button>
+                        <StoreExplorerStoreSelectorComponent />
+                        <StoreExplorerActionListComponent />
                     </div>
-                )}
-            </If>
-        </div>
+                    <If condition={state.selectedAction && !state.selectedChange}>
+                        {() => {
+                            const diff = getStoreActionDiff();
+                            return <MonacoDiffEditor original={diff.original} value={diff.value} />
+                        }}
+                    </If>
+                    <If condition={state.selectedAction && state.selectedChange}>
+                        {() => {
+                            const diff = getActionChangeDiff();
+                            return <MonacoDiffEditor original={diff.original} value={diff.value} />
+                        }}
+                    </If>
+                    <If condition={state.selectedStoreIndex != null && !state.selectedAction}>
+                        {() => (
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateRows: 'auto max-content',
+                                gap: '10px',
+                                padding: '10px',
+                                background: 'var(--background-secondary-color)',
+                                color: 'var(--background-secondary-text-color)',
+                            }}>
+                                <MonacoEditor
+                                    ref={monacoEditorRef}
+                                    value={getStoreState()}
+                                />
+                                <button
+                                    style={{
+                                        cursor: 'pointer',
+                                        padding: '5px 10px',
+                                        border: 'none',
+                                        background: 'var(--select-color)',
+                                        color: 'var(--select-text-color)'
+                                    }}
+                                    onClick={() => {
+                                        const value = tryParseJson(monacoEditorRef.current.model.getValue());
+                                        if (value) {
+                                            const changes = $Changes.get(getStoreState(), value);
+                                            extension.send('update', {
+                                                index: state.selectedStoreIndex,
+                                                changes
+                                            });
+                                        }
+                                    }}>
+                                    Update
+                                </button>
+                            </div>
+                        )}
+                    </If>
+                </div>
+            )}
+        </Async>
     );
 });
